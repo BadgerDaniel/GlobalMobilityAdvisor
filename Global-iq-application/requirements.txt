@@ -1,0 +1,13 @@
+chainlit
+openai
+python-dotenv
+PyMuPDF
+python-docx
+openpyxl
+langchain
+langchain-openai
+pandas
+SQLAlchemy
+aiosqlite
+asyncpg
+greenlet
