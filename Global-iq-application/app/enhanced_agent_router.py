@@ -85,7 +85,7 @@ class EnhancedAgentRouter:
         """Load configuration from route_config.json"""
         try:
             config_path = os.path.join(os.path.dirname(__file__), 'route_config.json')
-            with open(config_path, 'r') as f:
+            with open(config_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
             print(f"Warning: Could not load route config: {e}")
@@ -136,17 +136,17 @@ class EnhancedAgentRouter:
     def route_query(self, user_input: str) -> dict:
         """
         Route a user query to the appropriate destination.
-        
+
         Args:
             user_input: The user's query string
-            
+
         Returns:
             dict: Contains 'destination', 'next_inputs', and 'route_info'
         """
         try:
             # Simple rule-based routing first for obvious cases
             user_input_lower = user_input.lower().strip()
-            
+
             # Direct keyword matching for single words or obvious cases
             if user_input_lower in ['compensation', 'salary', 'pay', 'money', 'cost', 'compensation calculator']:
                 destination = "compensation"
@@ -158,25 +158,32 @@ class EnhancedAgentRouter:
                 destination = "guidance_fallback"
                 print(f"Direct routing: '{user_input}' -> guidance_fallback")
             else:
-                # Use LLM for more complex queries
-                try:
-                    routing_result = self.router_chain.invoke({"input": user_input})
-                    
-                    # Handle different response formats from LangChain
-                    if isinstance(routing_result, dict):
-                        if "destination_and_inputs" in routing_result:
-                            destination_info = routing_result["destination_and_inputs"]
+                # TRY KEYWORD MATCHING FIRST (more reliable)
+                keyword_route = self._keyword_based_routing(user_input)
+
+                if keyword_route:
+                    destination = keyword_route
+                    print(f"Keyword-based routing: '{user_input}' -> {destination}")
+                else:
+                    # Use LLM for more complex queries
+                    try:
+                        routing_result = self.router_chain.invoke({"input": user_input})
+
+                        # Handle different response formats from LangChain
+                        if isinstance(routing_result, dict):
+                            if "destination_and_inputs" in routing_result:
+                                destination_info = routing_result["destination_and_inputs"]
+                            else:
+                                destination_info = routing_result
                         else:
-                            destination_info = routing_result
-                    else:
-                        destination_info = {"destination": "guidance_fallback", "next_inputs": {"input": user_input}}
-                    
-                    destination = destination_info.get("destination", "guidance_fallback")
-                    print(f"LLM routing: '{user_input}' -> {destination}")
-                    
-                except Exception as llm_error:
-                    print(f"LLM routing failed: {llm_error}, defaulting to guidance_fallback")
-                    destination = "guidance_fallback"
+                            destination_info = {"destination": "guidance_fallback", "next_inputs": {"input": user_input}}
+
+                        destination = destination_info.get("destination", "guidance_fallback")
+                        print(f"LLM routing: '{user_input}' -> {destination}")
+
+                    except Exception as llm_error:
+                        print(f"LLM routing failed: {llm_error}, defaulting to guidance_fallback")
+                        destination = "guidance_fallback"
             
             next_inputs = {"input": user_input}
             

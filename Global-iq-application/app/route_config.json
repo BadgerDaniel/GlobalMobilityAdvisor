@@ -44,8 +44,10 @@
       "financial", "money", "cost", "expense", "budget", "calculation", "calculate",
       "earning", "earnings", "wage", "wages", "figure out", "how much", "estimate",
       "euros", "dollars", "usd", "eur", "gbp", "pounds", "yen", "currency",
-      "50k", "salary of", "new salary", "engineer", "manager", "move them", "relocate",
-      "sao paolo", "london", "tokyo", "berlin", "paris", "new york", "per month", "per year"
+      "50k", "100k", "salary of", "new salary", "making", "earn", "engineer", "manager",
+      "move them", "relocate", "moving", "moving to", "relocating to",
+      "sao paolo", "london", "tokyo", "berlin", "paris", "new york", "chicago", "mumbai",
+      "bangalore", "singapore", "dubai", "hong kong", "per month", "per year"
     ],
     "both_policy_and_compensation": [
       "cheapest", "best", "optimal", "optimize", "recommend", "solution", "strategy",
