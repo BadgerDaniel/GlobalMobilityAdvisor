@@ -1,4 +1,4 @@
-# app/main.py
+c# app/main.py
 
 # --- Imports ---
 import chainlit as cl
@@ -15,7 +15,6 @@ from enhanced_agent_router import EnhancedAgentRouter
 from input_collector import InputCollector
 from typing import Optional
 import hashlib
-import httpx  # For MCP server communication
 # Data persistence imports
 from chainlit.data.sql_alchemy import SQLAlchemyDataLayer
 
@@ -83,120 +82,6 @@ router = EnhancedAgentRouter(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- Initialize Input Collector ---
 input_collector = InputCollector(openai_client=client)
-
-# --- MCP Client Helper ---
-class MCPClient:
-    """Helper class for communicating with MCP servers"""
-
-    def __init__(self):
-        self.compensation_url = os.getenv("COMPENSATION_SERVER_URL", "http://localhost:8081")
-        self.policy_url = os.getenv("POLICY_SERVER_URL", "http://localhost:8082")
-        self.timeout = 30.0  # 30 second timeout
-
-    async def predict_compensation(self, collected_data: dict) -> dict:
-        """
-        Call compensation MCP server
-
-        Args:
-            collected_data: Dictionary with keys like "Origin Location", "Destination Location", etc.
-
-        Returns:
-            Structured prediction response from MCP server
-        """
-        try:
-            # Parse salary (handle formats like "100,000 USD" or "100k USD")
-            salary_str = collected_data.get("Current Compensation", "0")
-            salary = self._parse_salary(salary_str)
-
-            # Build request payload
-            payload = {
-                "origin_location": collected_data.get("Origin Location", ""),
-                "destination_location": collected_data.get("Destination Location", ""),
-                "current_salary": salary,
-                "currency": self._extract_currency(salary_str),
-                "assignment_duration": collected_data.get("Assignment Duration", "12 months"),
-                "job_level": collected_data.get("Job Level/Title", "Manager"),
-                "family_size": int(collected_data.get("Family Size", "1")),
-                "housing_preference": collected_data.get("Housing Preference", "Company-provided")
-            }
-
-            async with httpx.AsyncClient() as http_client:
-                response = await http_client.post(
-                    f"{self.compensation_url}/predict",
-                    json=payload,
-                    timeout=self.timeout
-                )
-                response.raise_for_status()
-                return response.json()
-
-        except Exception as e:
-            print(f"MCP compensation prediction error: {e}")
-            raise
-
-    async def analyze_policy(self, collected_data: dict) -> dict:
-        """
-        Call policy MCP server
-
-        Args:
-            collected_data: Dictionary with keys like "Origin Country", "Destination Country", etc.
-
-        Returns:
-            Structured policy analysis from MCP server
-        """
-        try:
-            # Build request payload
-            payload = {
-                "origin_country": collected_data.get("Origin Country", ""),
-                "destination_country": collected_data.get("Destination Country", ""),
-                "assignment_type": collected_data.get("Assignment Type", "Long-term"),
-                "duration": collected_data.get("Assignment Duration", "12 months"),
-                "job_title": collected_data.get("Job Title", "Manager")
-            }
-
-            async with httpx.AsyncClient() as http_client:
-                response = await http_client.post(
-                    f"{self.policy_url}/analyze",
-                    json=payload,
-                    timeout=self.timeout
-                )
-                response.raise_for_status()
-                return response.json()
-
-        except Exception as e:
-            print(f"MCP policy analysis error: {e}")
-            raise
-
-    def _parse_salary(self, salary_str: str) -> float:
-        """Parse salary string to float"""
-        try:
-            # Remove common formatting
-            cleaned = salary_str.replace(",", "").replace("$", "").strip()
-
-            # Handle "100k" format
-            if "k" in cleaned.lower():
-                cleaned = cleaned.lower().replace("k", "")
-                return float(cleaned) * 1000
-
-            # Extract just the number part (before currency)
-            parts = cleaned.split()
-            return float(parts[0])
-        except:
-            return 0.0
-
-    def _extract_currency(self, salary_str: str) -> str:
-        """Extract currency from salary string"""
-        salary_str_upper = salary_str.upper()
-        if "USD" in salary_str_upper or "$" in salary_str:
-            return "USD"
-        elif "EUR" in salary_str_upper or "€" in salary_str:
-            return "EUR"
-        elif "GBP" in salary_str_upper or "£" in salary_str:
-            return "GBP"
-        else:
-            return "USD"  # Default
-
-# Initialize MCP Client
-mcp_client = MCPClient()
 
 # --- Data Persistence Layer Configuration ---
 # Temporarily disabled due to user/thread integration issues
@@ -351,152 +236,102 @@ FILE_HANDLERS = {
     ".xlsx": process_xlsx,
 }
 
-# --- Calculation Functions (Using MCP) ---
+# --- Placeholder Calculation Functions ---
 async def _run_compensation_calculation(collected_data: dict, extracted_texts: list) -> str:
-    """Calculate compensation using MCP server."""
+    """Placeholder function for compensation calculation using collected data."""
     try:
-        # Call MCP server for prediction
-        mcp_response = await mcp_client.predict_compensation(collected_data)
+        # Format the collected data for the LLM
+        data_summary = "\n".join([f"• **{key}:** {value}" for key, value in collected_data.items()])
+        
+        # Add document context if available
+        context_info = ""
+        if extracted_texts:
+            context_info = "\n\nAdditional context from uploaded documents:\n"
+            for item in extracted_texts:
+                max_len = 1000
+                truncated_content = item['content'][:max_len]
+                if len(item['content']) > max_len:
+                    truncated_content += "..."
+                context_info += f"\n--- {item['name']} ---\n{truncated_content}\n"
+        
+        # Create compensation calculation prompt
+        calc_prompt = f"""You are the Global IQ Compensation Calculator AI engine with years of mobility data and cost analysis experience.
+        
+Based on the following employee data, calculate a comprehensive compensation package for their international assignment:
 
-        # Check if successful
-        if mcp_response.get("status") != "success":
-            raise Exception(mcp_response.get("error", "Unknown error"))
-
-        # Extract prediction data
-        predictions = mcp_response.get("predictions", {})
-        breakdown = mcp_response.get("breakdown", {})
-        confidence = mcp_response.get("confidence_scores", {})
-        recommendations = mcp_response.get("recommendations", [])
-        methodology = mcp_response.get("methodology", {})
-
-        # Format response in a professional manner
-        result = f"""💰 **Compensation Calculation Results**
-
-**Summary:**
-• **Origin:** {collected_data.get("Origin Location", "N/A")}
-• **Destination:** {collected_data.get("Destination Location", "N/A")}
-• **Current Salary:** {collected_data.get("Current Compensation", "N/A")}
-
-**Compensation Package Breakdown:**
-
-**Base Salary:** {predictions.get('currency', 'USD')} {predictions.get('base_salary', 0):,.2f}
-**COLA Ratio:** {predictions.get('cola_ratio', 1.0):.2f}x
-**Adjusted Salary:** {predictions.get('currency', 'USD')} {predictions.get('adjusted_salary', 0):,.2f}
-**Housing Allowance:** {predictions.get('currency', 'USD')} {predictions.get('housing_allowance', 0):,.2f}
-**Hardship Pay:** {predictions.get('currency', 'USD')} {predictions.get('hardship_pay', 0):,.2f}
-
-**═══════════════════════════════════**
-**Total Package:** {predictions.get('currency', 'USD')} {predictions.get('total_package', 0):,.2f}
-**═══════════════════════════════════**
-
-**Confidence Scores:**
-• COLA: {confidence.get('cola', 0.0):.0%}
-• Housing: {confidence.get('housing', 0.0):.0%}
-• Overall: {confidence.get('overall', 0.0):.0%}
-
-**Recommendations:**
-"""
-        # Add recommendations
-        for i, rec in enumerate(recommendations, 1):
-            result += f"{i}. {rec}\n"
-
-        # Add methodology info
-        result += f"\n**Methodology:** {methodology.get('model_type', 'N/A')} (v{methodology.get('version', 'N/A')})"
-
+{data_summary}{context_info}
+        
+Provide a detailed breakdown including:
+1. Base salary adjustments
+2. Cost of living adjustments
+3. Housing allowances
+4. Hardship pay (if applicable)
+5. Tax implications
+6. Total estimated package
+7. Recommendations for optimization
+        
+Format your response professionally with clear financial breakdowns."""
+        
+        # Call OpenAI for calculation
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": calc_prompt}],
+            temperature=0.3
+        )
+        
+        result = f"💰 **Compensation Calculation Results**\n\n{response.choices[0].message.content}"
         return result
-
+        
     except Exception as e:
-        error_msg = f"Sorry, I encountered an error with the MCP compensation service: {str(e)}"
-        print(error_msg)
-        # Fallback: return a simple error message
-        return f"❌ **Error**: {error_msg}\n\nPlease ensure the MCP servers are running."
+        return f"Sorry, I encountered an error during compensation calculation: {str(e)}"
 
 async def _run_policy_analysis(collected_data: dict, extracted_texts: list) -> str:
-    """Analyze policy using MCP server."""
+    """Placeholder function for policy analysis using collected data."""
     try:
-        # Call MCP server for analysis
-        mcp_response = await mcp_client.analyze_policy(collected_data)
+        # Format the collected data for the LLM
+        data_summary = "\n".join([f"• **{key}:** {value}" for key, value in collected_data.items()])
+        
+        # Add document context if available
+        context_info = ""
+        if extracted_texts:
+            context_info = "\n\nAdditional context from uploaded documents:\n"
+            for item in extracted_texts:
+                max_len = 1000
+                truncated_content = item['content'][:max_len]
+                if len(item['content']) > max_len:
+                    truncated_content += "..."
+                context_info += f"\n--- {item['name']} ---\n{truncated_content}\n"
+        
+        # Create policy analysis prompt
+        policy_prompt = f"""You are the Global IQ Policy Analyzer AI engine trained on corporate mobility policies and compliance requirements.
+        
+Based on the following assignment details, provide a comprehensive policy analysis:
 
-        # Check if successful
-        if mcp_response.get("status") != "success":
-            raise Exception(mcp_response.get("error", "Unknown error"))
-
-        # Extract analysis data
-        analysis = mcp_response.get("analysis", {})
-        recommendations = mcp_response.get("recommendations", [])
-        confidence = mcp_response.get("confidence", 0.0)
-        metadata = mcp_response.get("metadata", {})
-
-        # Extract visa requirements
-        visa_req = analysis.get("visa_requirements", {})
-        eligibility = analysis.get("eligibility", {})
-        compliance = analysis.get("compliance", {})
-        timeline = analysis.get("timeline", {})
-        documentation = analysis.get("documentation", [])
-
-        # Format response
-        result = f"""📋 **Policy Analysis Results**
-
-**Summary:**
-• **Origin:** {collected_data.get("Origin Country", "N/A")}
-• **Destination:** {collected_data.get("Destination Country", "N/A")}
-• **Assignment Type:** {collected_data.get("Assignment Type", "N/A")}
-• **Duration:** {collected_data.get("Assignment Duration", "N/A")}
-
-**Visa Requirements:**
-• **Type:** {visa_req.get('visa_type', 'N/A')}
-• **Processing Time:** {visa_req.get('processing_time', 'N/A')}
-• **Cost:** {visa_req.get('cost', 'N/A')}
-• **Requirements:**
-"""
-        for req in visa_req.get('requirements', []):
-            result += f"  - {req}\n"
-
-        result += f"""
-**Eligibility:**
-• **Meets Requirements:** {'Yes' if eligibility.get('meets_requirements', False) else 'No'}
-"""
-        if eligibility.get('concerns'):
-            result += "• **Concerns:**\n"
-            for concern in eligibility.get('concerns', []):
-                result += f"  - {concern}\n"
-
-        result += f"""
-**Timeline:**
-• **Visa Application:** {timeline.get('visa_application', 'N/A')}
-• **Visa Approval:** {timeline.get('visa_approval', 'N/A')}
-• **Relocation Prep:** {timeline.get('relocation_prep', 'N/A')}
-• **Target Start Date:** {timeline.get('start_date', 'N/A')}
-
-**Required Documentation:**
-"""
-        for doc in documentation:
-            result += f"• {doc}\n"
-
-        result += f"""
-**Compliance Considerations:**
-**Origin Country Requirements:**
-"""
-        for req in compliance.get('origin_requirements', []):
-            result += f"• {req}\n"
-
-        result += "\n**Destination Country Requirements:**\n"
-        for req in compliance.get('destination_requirements', []):
-            result += f"• {req}\n"
-
-        result += "\n**Recommendations:**\n"
-        for i, rec in enumerate(recommendations, 1):
-            result += f"{i}. {rec}\n"
-
-        result += f"\n**Confidence:** {confidence:.0%}"
-        result += f"\n**Data Source:** {metadata.get('model_type', 'N/A')} (Updated: {metadata.get('last_updated', 'N/A')})"
-
+{data_summary}{context_info}
+        
+Analyze and provide guidance on:
+1. Eligibility requirements and compliance
+2. Visa and immigration requirements
+3. Assignment approval process
+4. Policy constraints or limitations
+5. Required documentation
+6. Timeline and next steps
+7. Risk factors and mitigation strategies
+        
+Format your response as a structured policy guidance document."""
+        
+        # Call OpenAI for analysis
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": policy_prompt}],
+            temperature=0.3
+        )
+        
+        result = f"📋 **Policy Analysis Results**\n\n{response.choices[0].message.content}"
         return result
-
+        
     except Exception as e:
-        error_msg = f"Sorry, I encountered an error with the MCP policy service: {str(e)}"
-        print(error_msg)
-        return f"❌ **Error**: {error_msg}\n\nPlease ensure the MCP servers are running."
+        return f"Sorry, I encountered an error during policy analysis: {str(e)}"
 
 # --- Chainlit Event Handlers ---
 
