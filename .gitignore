@@ -110,3 +110,4 @@ yarn-error.log
 # Git
 .git/
 .gitkeep
+Global-IQ/.git/

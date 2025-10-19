@@ -1,0 +1,57 @@
+{
+  "route_messages": {
+    "policy": {
+      "title": "Policy Specialist",
+      "description": "Analyzing corporate mobility policies, assignment rules, and compliance guidelines",
+      "emoji": "📋"
+    },
+    "compensation": {
+      "title": "Compensation Expert", 
+      "description": "Calculating salary packages, benefits, allowances, and financial aspects of relocations",
+      "emoji": "💰"
+    },
+    "both_policy_and_compensation": {
+      "title": "Strategic Advisor",
+      "description": "Providing comprehensive solutions that balance policy requirements with compensation optimization",
+      "emoji": "🎯"
+    },
+    "other_rag": {
+      "title": "Document Specialist",
+      "description": "Retrieving specific information from uploaded documents and company guidelines",
+      "emoji": "📚"
+    },
+    "guidance_fallback": {
+      "title": "General Assistant",
+      "description": "Helping you understand how to best use the Global IQ system for your mobility needs",
+      "emoji": "🤝"
+    }
+  },
+  "routing_keywords": {
+    "guidance_fallback": [
+      "who are you", "what are you", "what can you do", "what else can you do", "help", "hello", "hi", 
+      "how does this work", "what is this", "explain", "introduction", "capabilities",
+      "who", "what", "how", "general", "info", "information", "what else", "other options",
+      "more info", "tell me more", "other capabilities", "anything else"
+    ],
+    "policy": [
+      "policy", "policies", "rules", "guidelines", "compliance", "assignment", "assignments", 
+      "regulations", "requirements", "eligibility", "approval", "process", "procedure",
+      "short-term", "long-term", "permanent", "temporary", "visa", "immigration"
+    ],
+    "compensation": [
+      "compensation", "salary", "pay", "payment", "allowance", "allowances", "benefits",
+      "cost of living", "housing", "hardship", "tax", "taxes", "income", "package",
+      "financial", "money", "cost", "expense", "budget", "calculation", "calculate",
+      "earning", "earnings", "wage", "wages", "figure out", "how much", "estimate",
+      "euros", "dollars", "usd", "eur", "gbp", "pounds", "yen", "currency",
+      "50k", "100k", "salary of", "new salary", "making", "earn", "engineer", "manager",
+      "move them", "relocate", "moving", "moving to", "relocating to",
+      "sao paolo", "london", "tokyo", "berlin", "paris", "new york", "chicago", "mumbai",
+      "bangalore", "singapore", "dubai", "hong kong", "per month", "per year"
+    ],
+    "both_policy_and_compensation": [
+      "cheapest", "best", "optimal", "optimize", "recommend", "solution", "strategy",
+      "budget", "cost-effective", "compare", "options", "alternatives"
+    ]
+  }
+}

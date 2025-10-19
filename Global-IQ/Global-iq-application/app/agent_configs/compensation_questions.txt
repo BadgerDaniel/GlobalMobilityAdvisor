@@ -1,0 +1,46 @@
+# Compensation Agent - Input Collection Questions
+
+## Required Information for Compensation Calculation
+
+1. **Origin Location** 
+   - Question: "What is the employee's current location (city, country)?"
+   - Format: City, Country (e.g., "New York, USA")
+
+2. **Destination Location**
+   - Question: "Where will the employee be relocating to (city, country)?"
+   - Format: City, Country (e.g., "London, UK")
+
+3. **Current Base Salary**
+   - Question: "What is the employee's current annual base salary and currency?"
+   - Format: Amount + Currency (e.g., "$75,000 USD")
+
+4. **Employee Level/Grade**
+   - Question: "What is the employee's level or grade?"
+   - Options: Junior, Mid-level, Senior, Manager, Director, Executive
+
+5. **Family Status**
+   - Question: "What is the employee's family situation?"
+   - Options: Single, Married (no children), Married with children, Single parent
+
+6. **Assignment Type**
+   - Question: "What type of assignment is this?"
+   - Options: Permanent relocation, Long-term assignment (1-3 years), Short-term assignment (3-12 months)
+
+7. **Assignment Duration** (if temporary)
+   - Question: "What is the expected duration of the assignment?"
+   - Format: Number of months/years
+
+8. **Housing Preference**
+   - Question: "What housing arrangement is preferred?"
+   - Options: Company-provided housing, Housing allowance, Employee finds own housing
+
+9. **Special Circumstances**
+   - Question: "Are there any special circumstances to consider?"
+   - Examples: Hardship location, high cost of living, remote location, etc.
+
+## Calculation Process
+Once all information is collected, our AI engine will:
+- Calculate cost-of-living adjustments
+- Determine appropriate allowances (housing, hardship, etc.)
+- Factor in tax implications
+- Provide total compensation package estimate
