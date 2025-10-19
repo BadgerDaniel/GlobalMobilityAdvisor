@@ -1,0 +1,112 @@
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Environment and Configuration
+.env
+.env.local
+.env.*.local
+*.pem
+secrets.json
+
+# Testing and Coverage
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+.nose/
+*.cover
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Logs and Temporary Files
+*.log
+*.pot
+*.mo
+*.pid
+*.seed
+*.pid.lock
+.log
+
+# Database and Cache
+*.db
+*.sqlite
+*.sqlite3
+chat_history.db
+.cache/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build Artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+
+# Node (if applicable)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# macOS
+.AppleDouble
+.LSOverride
+*.sublime-workspace
+*.sublime-project
+
+# Git
+.git/
+.gitkeep
