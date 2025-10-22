@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: global-iq-config
+  labels:
+    app: global-iq
+data:
+  # Python environment settings
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
+
+  # Application settings
+  APP_PORT: "8000"
+  APP_HOST: "0.0.0.0"
+
+  # Add other non-sensitive configuration here
+  # Example: LOG_LEVEL: "INFO"

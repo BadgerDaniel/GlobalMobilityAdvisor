@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: global-iq
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - persistent-volume.yaml
+  - deployment.yaml
+  # Note: secret.yaml should be created from secret.yaml.template
+  # and added manually (don't commit to git)
+
+commonLabels:
+  app: global-iq
+  managed-by: kustomize

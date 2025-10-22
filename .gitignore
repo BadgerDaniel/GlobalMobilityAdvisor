@@ -49,6 +49,11 @@ MANIFEST
 *.pem
 secrets.json
 
+# Kubernetes Secrets
+k8s/secret.yaml
+*/k8s/secret.yaml
+**/k8s/secret.yaml
+
 # Testing and Coverage
 .pytest_cache/
 .tox/

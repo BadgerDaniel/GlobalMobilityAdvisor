@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: global-iq-deployment
+  labels:
+    app: global-iq
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: global-iq
+  template:
+    metadata:
+      labels:
+        app: global-iq
+        tier: backend
+    spec:
+      containers:
+      - name: global-iq-app
+        image: YOUR_DOCKERHUB_USERNAME/global-iq-app:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: CHAINLIT_AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: global-iq-secrets
+              key: chainlit-auth-secret
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-iq-secrets
+              key: openai-api-key
+        envFrom:
+        - configMapRef:
+            name: global-iq-config
+        volumeMounts:
+        - name: uploads-storage
+          mountPath: /app/uploads
+        - name: logs-storage
+          mountPath: /app/logs
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 40
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: uploads-storage
+        persistentVolumeClaim:
+          claimName: global-iq-uploads-pvc
+      - name: logs-storage
+        persistentVolumeClaim:
+          claimName: global-iq-logs-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: global-iq-service
+  labels:
+    app: global-iq
+spec:
+  type: LoadBalancer
+  selector:
+    app: global-iq
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http

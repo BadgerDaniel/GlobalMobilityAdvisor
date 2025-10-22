@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: global-iq
+  labels:
+    name: global-iq
+    environment: production
