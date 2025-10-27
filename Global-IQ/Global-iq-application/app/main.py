@@ -22,6 +22,17 @@ from chainlit.data.sql_alchemy import SQLAlchemyDataLayer
 # --- Load Environment Variables ---
 load_dotenv()
 
+# --- MCP Integration Imports ---
+from service_manager import MCPServiceManager
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 # --- User Database (In production, use a proper database) ---
 USERS_DB = {
     "admin": {
@@ -86,6 +97,16 @@ input_collector = InputCollector(openai_client=client)
 
 # --- Initialize Conversational Collector ---
 conversational_collector = ConversationalCollector(openai_client=client)
+
+# --- Initialize MCP Service Manager ---
+# Set enable_mcp=True to use MCP servers, False to always use fallback
+mcp_service_manager = MCPServiceManager(
+    openai_client=client,
+    compensation_server_url=os.getenv("COMPENSATION_SERVER_URL", "http://localhost:8081"),
+    policy_server_url=os.getenv("POLICY_SERVER_URL", "http://localhost:8082"),
+    enable_mcp=os.getenv("ENABLE_MCP", "true").lower() == "true"
+)
+logger.info(f"MCP Service Manager initialized (MCP enabled: {mcp_service_manager.enable_mcp})")
 
 # --- Data Persistence Layer Configuration ---
 # Temporarily disabled due to user/thread integration issues
@@ -240,101 +261,45 @@ FILE_HANDLERS = {
     ".xlsx": process_xlsx,
 }
 
-# --- Placeholder Calculation Functions ---
+# --- Calculation Functions (MCP Integration) ---
 async def _run_compensation_calculation(collected_data: dict, extracted_texts: list) -> str:
-    """Placeholder function for compensation calculation using collected data."""
+    """
+    Run compensation calculation via MCP Service Manager.
+    Uses MCP servers if available, falls back to GPT-4.
+    """
     try:
-        # Format the collected data for the LLM
-        data_summary = "\n".join([f"• **{key}:** {value}" for key, value in collected_data.items()])
-        
-        # Add document context if available
-        context_info = ""
-        if extracted_texts:
-            context_info = "\n\nAdditional context from uploaded documents:\n"
-            for item in extracted_texts:
-                max_len = 1000
-                truncated_content = item['content'][:max_len]
-                if len(item['content']) > max_len:
-                    truncated_content += "..."
-                context_info += f"\n--- {item['name']} ---\n{truncated_content}\n"
-        
-        # Create compensation calculation prompt
-        calc_prompt = f"""You are the Global IQ Compensation Calculator AI engine with years of mobility data and cost analysis experience.
-        
-Based on the following employee data, calculate a comprehensive compensation package for their international assignment:
+        logger.info(f"Starting compensation calculation for: {collected_data.get('Destination Location', 'Unknown')}")
 
-{data_summary}{context_info}
-        
-Provide a detailed breakdown including:
-1. Base salary adjustments
-2. Cost of living adjustments
-3. Housing allowances
-4. Hardship pay (if applicable)
-5. Tax implications
-6. Total estimated package
-7. Recommendations for optimization
-        
-Format your response professionally with clear financial breakdowns."""
-        
-        # Call OpenAI for calculation
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": calc_prompt}],
-            temperature=0.3
+        # Use service manager (handles MCP + fallback)
+        result = await mcp_service_manager.predict_compensation(
+            collected_data=collected_data,
+            extracted_texts=extracted_texts
         )
-        
-        result = f"💰 **Compensation Calculation Results**\n\n{response.choices[0].message.content}"
+
         return result
-        
+
     except Exception as e:
+        logger.error(f"Compensation calculation failed: {str(e)}")
         return f"Sorry, I encountered an error during compensation calculation: {str(e)}"
 
 async def _run_policy_analysis(collected_data: dict, extracted_texts: list) -> str:
-    """Placeholder function for policy analysis using collected data."""
+    """
+    Run policy analysis via MCP Service Manager.
+    Uses MCP servers if available, falls back to GPT-4.
+    """
     try:
-        # Format the collected data for the LLM
-        data_summary = "\n".join([f"• **{key}:** {value}" for key, value in collected_data.items()])
-        
-        # Add document context if available
-        context_info = ""
-        if extracted_texts:
-            context_info = "\n\nAdditional context from uploaded documents:\n"
-            for item in extracted_texts:
-                max_len = 1000
-                truncated_content = item['content'][:max_len]
-                if len(item['content']) > max_len:
-                    truncated_content += "..."
-                context_info += f"\n--- {item['name']} ---\n{truncated_content}\n"
-        
-        # Create policy analysis prompt
-        policy_prompt = f"""You are the Global IQ Policy Analyzer AI engine trained on corporate mobility policies and compliance requirements.
-        
-Based on the following assignment details, provide a comprehensive policy analysis:
+        logger.info(f"Starting policy analysis for: {collected_data.get('Destination Country', 'Unknown')}")
 
-{data_summary}{context_info}
-        
-Analyze and provide guidance on:
-1. Eligibility requirements and compliance
-2. Visa and immigration requirements
-3. Assignment approval process
-4. Policy constraints or limitations
-5. Required documentation
-6. Timeline and next steps
-7. Risk factors and mitigation strategies
-        
-Format your response as a structured policy guidance document."""
-        
-        # Call OpenAI for analysis
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": policy_prompt}],
-            temperature=0.3
+        # Use service manager (handles MCP + fallback)
+        result = await mcp_service_manager.analyze_policy(
+            collected_data=collected_data,
+            extracted_texts=extracted_texts
         )
-        
-        result = f"📋 **Policy Analysis Results**\n\n{response.choices[0].message.content}"
+
         return result
-        
+
     except Exception as e:
+        logger.error(f"Policy analysis failed: {str(e)}")
         return f"Sorry, I encountered an error during policy analysis: {str(e)}"
 
 # --- Chainlit Event Handlers ---
@@ -396,7 +361,8 @@ async def handle_message(msg: cl.Message):
             help_msg = "🔧 **Admin Commands:**\n\n"
             help_msg += "• `/users` - List all registered users\n"
             help_msg += "• `/help` - Show this help message\n"
-            help_msg += "• `/history` - View current session chat history\n\n"
+            help_msg += "• `/history` - View current session chat history\n"
+            help_msg += "• `/health` - Check MCP server health and statistics\n\n"
             help_msg += "**Multi-Chat Features:**\n"
             help_msg += "• Chat history is now automatically saved\n"
             help_msg += "• Users can resume previous conversations\n"
@@ -417,6 +383,35 @@ async def handle_message(msg: cl.Message):
             else:
                 history_msg = "📜 **Chat History:** No messages in current session yet."
             await cl.Message(content=history_msg).send()
+            return
+        elif msg.content.lower() == '/health':
+            health_status = await mcp_service_manager.get_health_status()
+
+            health_msg = "🏥 **System Health Status**\n\n"
+            health_msg += f"**MCP Enabled**: {health_status.get('mcp_enabled', False)}\n\n"
+
+            if health_status.get('mcp_enabled'):
+                servers = health_status.get('servers', {})
+                health_msg += "**Server Status**:\n"
+                for server, status in servers.items():
+                    emoji = "✅" if status else "❌"
+                    health_msg += f"{emoji} {server.replace('_', ' ').title()}: {'Healthy' if status else 'Down'}\n"
+
+                stats = health_status.get('statistics', {})
+                health_msg += f"\n**Usage Statistics**:\n"
+                health_msg += f"• MCP Calls: {stats.get('mcp_calls', 0)}\n"
+                health_msg += f"• Fallback Calls: {stats.get('fallback_calls', 0)}\n"
+                health_msg += f"• Errors: {stats.get('errors', 0)}\n"
+
+                last_check = health_status.get('last_check')
+                if last_check:
+                    health_msg += f"\n**Last Health Check**: {last_check}\n"
+            else:
+                reason = health_status.get('reason', 'Unknown')
+                health_msg += f"**Reason**: {reason}\n"
+                health_msg += "\n*All requests will use fallback GPT-4 directly*"
+
+            await cl.Message(content=health_msg).send()
             return
     
     history = cl.user_session.get("history", []) # Default to empty list if not found

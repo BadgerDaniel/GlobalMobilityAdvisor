@@ -1,0 +1,31 @@
+# Test Requirements for Global IQ Application
+# Install with: pip install -r requirements-test.txt
+
+# Core testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+
+# Code coverage
+coverage>=7.3.0
+
+# For mocking HTTP requests (if needed in future)
+responses>=0.23.0
+requests-mock>=1.11.0
+
+# For better test output
+pytest-html>=3.2.0
+pytest-xdist>=3.3.0  # For parallel test execution
+
+# Code quality and linting (optional but recommended)
+black>=23.7.0
+ruff>=0.0.285
+mypy>=1.5.0
+
+# For testing async code
+asyncio>=3.4.3
+
+# Additional testing utilities
+faker>=19.3.0  # For generating test data
+freezegun>=1.2.2  # For mocking datetime
