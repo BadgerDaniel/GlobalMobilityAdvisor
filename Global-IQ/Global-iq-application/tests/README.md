@@ -19,11 +19,23 @@ This test suite provides **unit tests** and **integration tests** for all major 
 tests/
 ├── __init__.py
 ├── conftest.py                      # Shared fixtures and configuration
+│
+# Unit Tests (Component-level)
 ├── test_enhanced_agent_router.py   # Router tests (keyword + LLM)
 ├── test_conversational_collector.py # Conversational collector tests
 ├── test_input_collector.py         # Sequential collector tests
 ├── test_file_processing.py         # File handler tests
 ├── test_authentication.py          # Auth and session tests
+│
+# Integration Tests (End-to-end)
+├── test_mcp_integration.py         # MCP service manager integration
+├── test_mcp_direct.py              # Direct MCP server tests
+├── test_full_flow.py               # Full application flow tests
+│
+# Utility Tests
+├── test_installation.py            # Installation verification
+├── test_quick.py                   # Quick sanity checks
+│
 └── README.md                        # This file
 ```
 

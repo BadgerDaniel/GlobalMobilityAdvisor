@@ -1,6 +1,47 @@
 version: '3.8'
 
 services:
+  # Compensation MCP Server
+  compensation-server:
+    build:
+      context: ./services/mcp_prediction_server
+      dockerfile: Dockerfile.compensation
+    container_name: global-iq-compensation-server
+    ports:
+      - "8081:8081"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - global-iq-network
+
+  # Policy MCP Server
+  policy-server:
+    build:
+      context: ./services/mcp_prediction_server
+      dockerfile: Dockerfile.policy
+    container_name: global-iq-policy-server
+    ports:
+      - "8082:8082"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - global-iq-network
+
+  # Main Chainlit Application
   global-iq-app:
     build: .
     container_name: global-iq-mobility-advisor
@@ -9,6 +50,9 @@ services:
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - CHAINLIT_AUTH_SECRET=password
+      - ENABLE_MCP=true
+      - COMPENSATION_SERVER_URL=http://compensation-server:8081
+      - POLICY_SERVER_URL=http://policy-server:8082
     volumes:
       # Mount uploads directory for file persistence
       - ./uploads:/app/uploads
@@ -21,6 +65,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    depends_on:
+      compensation-server:
+        condition: service_healthy
+      policy-server:
+        condition: service_healthy
     networks:
       - global-iq-network
 

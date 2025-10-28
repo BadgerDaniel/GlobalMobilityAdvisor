@@ -1,0 +1,4 @@
+chat_histories/
+*.db
+__pycache__/
+*.pyc
