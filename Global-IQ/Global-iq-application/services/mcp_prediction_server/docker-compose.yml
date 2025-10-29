@@ -1,0 +1,48 @@
+version: '3.8'
+
+# Standalone MCP Servers for Data Science Team
+# This compose file runs ONLY the MCP servers for independent testing
+
+services:
+  compensation-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.compensation
+    container_name: mcp-compensation-server
+    ports:
+      - "8081:8081"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  policy-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.policy
+    container_name: mcp-policy-server
+    ports:
+      - "8082:8082"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Usage:
+# 1. Set OPENAI_API_KEY in .env file (for placeholder)
+# 2. docker-compose up -d
+# 3. Test at:
+#    - Compensation: http://localhost:8081/docs
+#    - Policy: http://localhost:8082/docs
+# 4. Replace OpenAI implementation with your models
+# 5. Rebuild: docker-compose up --build -d

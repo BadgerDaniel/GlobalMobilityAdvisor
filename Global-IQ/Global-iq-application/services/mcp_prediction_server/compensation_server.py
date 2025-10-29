@@ -22,10 +22,17 @@ logger = logging.getLogger(__name__)
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Initialize FastAPI application
-app = FastAPI(title="Compensation Predictor MCP Server")
+app = FastAPI(
+    title="Compensation Predictor MCP Server",
+    description="MCP server for international relocation compensation predictions",
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
 # Request model
 class CompensationRequest(BaseModel):
+    """Request model for compensation prediction"""
     origin_location: str
     destination_location: str
     current_salary: float
@@ -35,6 +42,89 @@ class CompensationRequest(BaseModel):
     family_size: int = 1
     housing_preference: str = "Company-provided"
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "origin_location": "New York, USA",
+                "destination_location": "London, UK",
+                "current_salary": 100000,
+                "currency": "USD",
+                "assignment_duration": "24 months",
+                "job_level": "Senior Engineer",
+                "family_size": 3,
+                "housing_preference": "Company-provided"
+            }
+        }
+
+# Response models
+class PredictionsModel(BaseModel):
+    """Compensation predictions"""
+    total_package: float
+    base_salary: float
+    currency: str
+    cola_ratio: float
+
+class BreakdownModel(BaseModel):
+    """Cost breakdown"""
+    cola_adjustment: float
+    housing: float
+    hardship: float
+    tax_gross_up: float
+
+class ConfidenceScoresModel(BaseModel):
+    """Model confidence scores"""
+    overall: float
+    cola: float = None
+    housing: float = None
+
+class MetadataModel(BaseModel):
+    """Response metadata"""
+    model_version: str
+    timestamp: str
+    methodology: str
+
+class CompensationResponse(BaseModel):
+    """Response model for compensation prediction"""
+    status: str
+    predictions: PredictionsModel
+    breakdown: BreakdownModel
+    confidence_scores: ConfidenceScoresModel
+    recommendations: list[str]
+    metadata: MetadataModel
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "status": "success",
+                "predictions": {
+                    "total_package": 145000.00,
+                    "base_salary": 100000.00,
+                    "currency": "USD",
+                    "cola_ratio": 1.15
+                },
+                "breakdown": {
+                    "cola_adjustment": 15000.00,
+                    "housing": 24000.00,
+                    "hardship": 0.00,
+                    "tax_gross_up": 6000.00
+                },
+                "confidence_scores": {
+                    "overall": 0.85,
+                    "cola": 0.90,
+                    "housing": 0.80
+                },
+                "recommendations": [
+                    "Consider housing allowance adjustments",
+                    "Review tax equalization policy"
+                ],
+                "metadata": {
+                    "model_version": "placeholder-v1.0",
+                    "timestamp": "2025-10-27T12:00:00Z",
+                    "methodology": "OpenAI GPT-4 placeholder (replace with your model)"
+                }
+            }
+        }
+
 
 @app.get("/health")
 async def health_check():
@@ -42,10 +132,21 @@ async def health_check():
     return {"status": "healthy", "service": "compensation_predictor"}
 
 
-@app.post("/predict")
-async def predict_compensation_endpoint(request: CompensationRequest) -> Dict[str, Any]:
+@app.post("/predict", response_model=CompensationResponse)
+async def predict_compensation_endpoint(
+    request: CompensationRequest
+) -> CompensationResponse:
     """
-    API endpoint for compensation prediction
+    **API endpoint for compensation prediction**
+
+    This is the main integration point. Replace the OpenAI implementation
+    with your trained ML model while maintaining this exact response format.
+
+    **For Data Science Team:**
+    - Keep this endpoint signature unchanged
+    - Replace `predict_compensation()` implementation with your model
+    - Maintain the response schema (see CompensationResponse model)
+    - Return same structure with your predictions
     """
     return await predict_compensation(
         origin_location=request.origin_location,
@@ -276,6 +377,7 @@ if __name__ == "__main__":
     import uvicorn
     logger.info("Starting Compensation Prediction MCP Server on port 8081")
     uvicorn.run(app, host="0.0.0.0", port=8081)
+
 
 
 
