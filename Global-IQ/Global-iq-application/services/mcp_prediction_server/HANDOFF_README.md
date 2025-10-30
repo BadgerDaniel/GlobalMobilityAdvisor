@@ -1,8 +1,28 @@
 # MCP Server Handoff Package
 
-**For:** Data Science Team
-**Purpose:** Integrate your ML models into our HR application
-**Status:** Ready for handoff
+**For:** Policy and Compensation Modeling Teams
+
+---
+
+## Team Assignments
+
+This package contains two separate models for two separate teams:
+
+### **Compensation Modeling Team**
+- **Your Model:** Compensation calculations (salary, COLA, allowances)
+- **Your File:** `compensation_server.py`
+- **Your Port:** 8081
+- **Your Endpoint:** `POST /predict`
+- **Your Contract:** See "Compensation Server" section in [MCP_CONTRACT.md](MCP_CONTRACT.md)
+
+### **Policy Modeling Team**
+- **Your Model:** Mobility policy analysis (visa, compliance, eligibility)
+- **Your File:** `policy_server.py`
+- **Your Port:** 8082
+- **Your Endpoint:** `POST /analyze`
+- **Your Contract:** See "Policy Server" section in [MCP_CONTRACT.md](MCP_CONTRACT.md)
+
+**Important:** You work independently! Each team implements their own model in their own file, running on their own port. Both can develop in parallel.
 
 ---
 
@@ -27,20 +47,26 @@ This is a **containerized MCP (Model Context Protocol) server** that we need you
 # Set your OpenAI key (only for testing placeholder)
 echo "OPENAI_API_KEY=sk-your-key" > .env
 
-# Start servers
+# Start servers (Docker must be running!)
 docker-compose up -d
 
-# Check they're running
+# Wait 30 seconds for startup, then check they're running
 curl http://localhost:8081/health
 curl http://localhost:8082/health
+# Should return: {"status":"healthy","service":"..."}
 ```
+
+**Note:** If you get "connection refused", the servers haven't started yet. Wait a bit longer or check logs with `docker-compose logs`.
 
 ### 2. View Interactive API Docs
 
+**After the servers are running** (step 1 above), open these in your browser:
 - Compensation: http://localhost:8081/docs
 - Policy: http://localhost:8082/docs
 
 **This is the contract you need to match!**
+
+The `/docs` endpoints only work while the Docker containers are running. You'll see interactive UI where you can test the API directly.
 
 ### 3. Test the Endpoints
 
@@ -56,21 +82,86 @@ You should see successful responses. **Your job: Make the same responses come fr
 
 ---
 
+## IMPORTANT: Input Requirements Discussion (Read This First)
+
+Before you start coding, we need to align on inputs and outputs.
+
+### Critical: We Only Provide User-Input Data
+
+**What we will give you:**
+
+- Data the user types into our LLM chat interface
+- Answers to questions we ask the user conversationally
+- Examples: origin city, destination city, current salary, job title, family size
+
+**What we will NOT give you:**
+
+- External API data (COLA databases, visa APIs, housing cost databases)
+- Real-time exchange rates or tax data
+- Industry benchmarks or historical trends
+- Any data not directly provided by the user
+
+**Your responsibility:** If your model needs external data (COLA indices, visa requirements, housing costs), you must fetch and integrate those data sources in your server code. We only pass through what users tell us directly.
+
+---
+
+### The API Contract is Negotiable!
+
+The request/response input examples we provided are **starting points**, not final requirements. We can easily adjust what data we collect from users to match what your model needs.
+The STRUCTURE is what is critical here!
+
+### Let's Discuss (15 Minutes):
+
+**1. What inputs does your model need from users?**
+Tell us what's optional and what's required. Simple Python code can fill in optional items we don't provide with an average or assumed value.
+   - Current fields: origin_location, destination_location, current_salary, job_level, family_size, housing_preference, assignment_duration
+   - **These are flexible!** Tell us what you actually need users to provide
+   - **Remember:** We can ONLY collect what users can answer (we can't fetch COLA data, visa databases, etc.)
+
+**2. What can your model predict?**
+   - Total compensation? Breakdown by component? Confidence scores?
+   - We'll adjust our UI to display whatever you can provide
+   - If you need external data sources, you integrate them on your side
+
+
+### Why This Matters
+
+On our side, changing what questions our LLM asks users is trivial:
+```python
+# app/agent_configs/compensation_questions.txt
+1. What is your current location?
+2. Where are you relocating to?
+3. What is your current salary?
+
+
+
+### Action Required
+
+**Before starting Step 1 below, email us with:**
+- What inputs your model needs 
+- What outputs your model can provide
+- Any questions about the integration
+
+Or let's schedule 15 minutes to align. 
+---
+
 ## What You Need to Do
 
-### Step 1: Understand the Contract
+### Step 1: Understand the Contract (After We Align)
 
 Read [MCP_CONTRACT.md](MCP_CONTRACT.md) - this defines:
-- ✅ Exact request format we'll send
-- ✅ Exact response format you must return
-- ✅ Port numbers (8081, 8082)
-- ✅ HTTP endpoints (`/health`, `/predict`, `/analyze`)
+- Exact request format we'll send
+- Exact response format you must return
+- Port numbers (8081, 8082)
+- HTTP endpoints (`/health`, `/predict`, `/analyze`)
 
 **Golden Rule:** Match the contract exactly, implement however you want.
 
-### Step 2: Replace the AI
+### Step 2: Replace the AI (Team-Specific)
 
-Open `compensation_server.py`:
+#### **For Compensation Modeling Team:**
+
+Open `compensation_server.py` and find lines 146-150:
 
 ```python
 # LINE 146-150: This is what you replace
@@ -81,9 +172,9 @@ response = openai.ChatCompletion.create(
 )
 ```
 
-**Replace with YOUR model:**
+**Replace with YOUR compensation model:**
 ```python
-# Your model code here
+# Your compensation model code here
 features = preprocess_inputs(...)
 predictions = your_model.predict(features)
 result = format_response(predictions)
@@ -143,9 +234,90 @@ open http://localhost:8081/docs
 ### Step 5: Hand Back to Us
 
 Give us:
-1. ✅ Your Docker images (or Dockerfiles)
-2. ✅ Updated `requirements.txt` if you added dependencies
-3. ✅ Brief doc explaining your model approach
+1. Your Docker images (or Dockerfiles)
+2. Updated `requirements.txt` if you added dependencies
+3. Brief doc explaining your model approach
+
+We'll plug it in and test integration.
+
+---
+
+#### **For Policy Modeling Team:**
+
+Open `policy_server.py` and find lines 146-150:
+
+```python
+# LINE 146-150: This is what you replace
+response = openai.ChatCompletion.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": analysis_prompt}],
+    temperature=0.1
+)
+```
+
+**Replace with YOUR policy model:**
+```python
+# Your policy model code here
+features = preprocess_policy_inputs(...)
+analysis = your_policy_model.analyze(features)
+result = format_policy_response(analysis)
+return result
+```
+
+**Keep everything else** (FastAPI endpoints, Pydantic models, port numbers).
+
+### Step 3: Maintain the Response Format (Team-Specific)
+
+#### **Compensation Team Response:**
+```json
+{
+  "status": "success",
+  "predictions": {
+    "total_package": 145000.00,
+    "base_salary": 100000.00,
+    ...
+  },
+  "breakdown": {...},
+  "confidence_scores": {...}
+}
+```
+
+#### **Policy Team Response:**
+```json
+{
+  "status": "success",
+  "analysis": {
+    "visa_required": true,
+    "visa_type": "Tier 2 General",
+    ...
+  },
+  "compliance": {...},
+  "requirements": {...}
+}
+```
+
+See [MCP_CONTRACT.md](MCP_CONTRACT.md) for complete schemas.
+
+### Step 4: Test Your Implementation
+
+```bash
+# Rebuild with your changes
+docker-compose up --build -d
+
+# Test it works
+./test_examples.sh  # or test_examples.bat on Windows
+
+# Verify interactive docs still work
+# Compensation Team: http://localhost:8081/docs
+# Policy Team: http://localhost:8082/docs
+```
+
+### Step 5: Hand Back to Us
+
+Give us:
+1. Your Docker images (or Dockerfiles)
+2. Updated `requirements.txt` if you added dependencies
+3. Brief doc explaining your model approach
 
 We'll plug it in and test integration.
 
@@ -234,12 +406,12 @@ We'll fall back to GPT-4.
 4. Load test with realistic traffic
 
 ### Success Criteria
-- ✅ Health checks pass
-- ✅ Response time < 2s
-- ✅ JSON format matches exactly
-- ✅ Confidence scores present
-- ✅ Error handling works
-- ✅ Container starts reliably
+- Health checks pass
+- Response time < 2s
+- JSON format matches exactly
+- Confidence scores present
+- Error handling works
+- Container starts reliably
 
 ---
 
@@ -292,20 +464,20 @@ User Query → Our App → Your MCP Server (timeout)
 ## What We Handle
 
 **You DON'T need to worry about:**
-- ❌ User interface (Chainlit)
-- ❌ Authentication (we handle login)
-- ❌ Query routing (we route to right endpoint)
-- ❌ File uploads (we process PDFs/docs)
-- ❌ Session management
-- ❌ Load balancing
-- ❌ Monitoring / alerting
-- ❌ Deployment infrastructure
+- User interface (Chainlit)
+- Authentication (we handle login)
+- Query routing (we route to right endpoint)
+- File uploads (we process PDFs/docs)
+- Session management
+- Load balancing
+- Monitoring / alerting
+- Deployment infrastructure
 
 **You ONLY need:**
-- ✅ Docker container
-- ✅ FastAPI endpoints matching contract
-- ✅ Your ML model
-- ✅ Response format
+- Docker container
+- FastAPI endpoints matching contract
+- Your ML model
+- Response format
 
 ---
 
@@ -342,63 +514,42 @@ lsof -i :8081                 # Linux/Mac
 
 **Technical Questions:**
 - API Contract: See MCP_CONTRACT.md
-- Implementation Help: [HR app team contact]
-
-**Model Questions:**
-- Your data science team lead
-- Model architecture decisions
-- Training data requirements
+- Implementation Help: [Ask Daniel Sa]
 
 ---
 
-## Timeline Suggestion
-
-**Week 1:** Understand contract, test placeholder
-**Week 2:** Implement your model, test locally
-**Week 3:** Integration testing with our app
-**Week 4:** Production deployment
 
 ---
 
 ## Summary
 
-**What We're Giving You:**
-```
-📦 Docker Containers
-├── 🔌 Clear API contract
-├── 📖 Interactive documentation
-├── 🧪 Test examples
-├── 🏗️ Reference implementation
-└── ✅ Ready to customize
-```
+**What we're giving you:**
 
-**What We Need Back:**
-```
-📦 Your Docker Containers
-├── Same ports (8081, 8082)
-├── Same endpoints (/health, /predict, /analyze)
-├── Same response format
-└── Your ML models inside
-```
+- Docker containers with working placeholder implementation
+- Clear API contract defining request/response formats
+- Interactive documentation at `/docs` endpoints
+- Test scripts to verify your implementation
+- Reference code showing the structure
 
-**That's it!** Match the contract, we plug it in, everything works.
+**What we need back:**
+
+- Your Docker containers with your ML models
+- Same ports (8081 for compensation, 8082 for policy)
+- Same endpoints (`/health`, `/predict`, `/analyze`)
+- Same response format as specified in the contract
+- Your trained models replacing the OpenAI placeholder
+
+That's it. Match the contract, and we can plug your containers directly into our application.
 
 ---
 
 ## Ready to Start?
 
-1. ✅ Read [MCP_CONTRACT.md](MCP_CONTRACT.md)
-2. ✅ Run `docker-compose up -d`
-3. ✅ Test with `./test_examples.sh`
-4. ✅ View docs at http://localhost:8081/docs
-5. ✅ Replace OpenAI with your model
-6. ✅ Test again
-7. ✅ Hand back to us
+1. Read [MCP_CONTRACT.md](MCP_CONTRACT.md)
+2. Run `docker-compose up -d`
+3. Test with `./test_examples.sh`
+4. View docs at http://localhost:8081/docs
+5. Replace OpenAI with your model
+6. Test again
+7. Hand back to us
 
-Questions? Contact us!
-
----
-
-**Good luck! 🚀**
-
-We're excited to integrate your ML models!

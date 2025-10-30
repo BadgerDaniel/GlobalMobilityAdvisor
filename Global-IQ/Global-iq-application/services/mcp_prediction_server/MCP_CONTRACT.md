@@ -1,21 +1,39 @@
 # MCP Server Contract
 
 **Version:** 2.0.0
-**For:** Data Science Team
+**For:** Compensation Modeling Team & Policy Modeling Team
 **Purpose:** Define the exact API contract for MCP server integration
+
+---
+
+## 🎯 Team Assignments
+
+This contract covers **TWO SEPARATE MODELS** for **TWO SEPARATE TEAMS**:
+
+### **Compensation Modeling Team → See "Compensation Server" Section Below**
+- **Your Responsibility:** Compensation package calculations
+- **Your Port:** 8081
+- **Your File:** `compensation_server.py`
+
+### **Policy Modeling Team → See "Policy Server" Section Below**
+- **Your Responsibility:** Mobility policy analysis
+- **Your Port:** 8082
+- **Your File:** `policy_server.py`
+
+**Both teams work independently** - you don't need to coordinate with each other, just match your respective contract.
 
 ---
 
 ## Overview
 
 This document defines the **contract** between:
-- **Your team** (HR application): Consumes the MCP endpoints
-- **Data Science team**: Implements the MCP servers with real ML models
+- **Our team** (HR application): Consumes the MCP endpoints
+- **Your teams**: Implement the MCP servers with real ML models
 
 **The Deal:**
-- ✅ We provide: Containerized reference implementation, API contract, testing tools
-- ✅ You provide: Docker containers matching this exact API contract
-- ✅ Result: Plug-and-play integration - if you match the contract, we connect automatically
+- We provide: Containerized reference implementation, API contract, testing tools
+- You provide: Docker containers matching this exact API contract
+- Result: Plug-and-play integration - if you match the contract, we connect automatically
 
 ---
 
@@ -372,29 +390,29 @@ Once your servers are running, we'll test integration:
 
 ### Success Criteria
 
-✅ Health checks pass
-✅ Endpoints respond within 5 seconds
-✅ Response JSON matches schema exactly
-✅ Error handling works (returns proper error responses)
-✅ Containers start reliably
-✅ No crashes under load
+Health checks pass
+Endpoints respond within 5 seconds
+Response JSON matches schema exactly
+Error handling works (returns proper error responses)
+Containers start reliably
+No crashes under load
 
 ---
 
 ## What You DON'T Need to Worry About
 
-- ❌ How we route queries (we handle this)
-- ❌ User interface (we handle this)
-- ❌ Authentication (we handle this)
-- ❌ File uploads (we handle this)
-- ❌ Session management (we handle this)
-- ❌ Deployment infrastructure (we can help)
+- How we route queries (we handle this)
+- User interface (we handle this)
+- Authentication (we handle this)
+- File uploads (we handle this)
+- Session management (we handle this)
+- Deployment infrastructure (we can help)
 
 **You ONLY need to:**
-- ✅ Match the API contract
-- ✅ Return valid responses
-- ✅ Provide Docker containers
-- ✅ Keep it running
+- Match the API contract
+- Return valid responses
+- Provide Docker containers
+- Keep it running
 
 ---
 
@@ -424,7 +442,7 @@ If we need to change the contract:
 3. Notify you before deployment
 4. Provide migration guide if needed
 
-**Current Status:** ✅ Stable - implement against this contract
+**Current Status:** Stable - implement against this contract
 
 ---
 

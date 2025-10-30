@@ -42,8 +42,9 @@ open http://localhost:8082/docs  # Policy API
 | **HANDOFF_README.md** | 📖 START HERE - Complete guide for data science team |
 | **MCP_CONTRACT.md** | 📋 API contract (request/response schemas) |
 | **docker-compose.yml** | 🐳 Standalone MCP server deployment |
-| **test_examples.sh** | 🧪 Test script (Linux/Mac) |
-| **test_examples.bat** | 🧪 Test script (Windows) |
+| **test_examples.sh** | 🧪 Basic test script (Linux/Mac) |
+| **test_examples.bat** | 🧪 Basic test script (Windows) |
+| **test_integration.py** | 🔬 Comprehensive integration test (Python) |
 | **compensation_server.py** | 💰 Compensation endpoint (FastAPI) |
 | **policy_server.py** | 📜 Policy endpoint (FastAPI) |
 | **Dockerfile.compensation** | 🐳 Compensation container |

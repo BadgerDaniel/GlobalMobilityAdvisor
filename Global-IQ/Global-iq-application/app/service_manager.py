@@ -32,6 +32,7 @@ class ServiceHealthMonitor:
             "compensation_server": False,
             "policy_server": False
         }
+        self._lock = asyncio.Lock()  # Prevent race conditions
 
     def is_cache_valid(self) -> bool:
         """Check if cached health status is still valid"""
@@ -41,29 +42,36 @@ class ServiceHealthMonitor:
 
     async def check_health(self, agent_system: GlobalIQAgentSystem) -> Dict[str, bool]:
         """
-        Check health of MCP servers with caching
+        Check health of MCP servers with caching (thread-safe)
 
         Returns:
             Dict with health status of each server
         """
-        # Return cached status if valid
+        # Quick check without lock for cache hit
         if self.is_cache_valid():
             logger.debug("Using cached health status")
             return self.last_status
 
-        # Perform fresh health check
-        logger.info("Performing health check on MCP servers")
-        try:
-            health_status = await asyncio.to_thread(agent_system.health_check)
-            self.last_status = health_status
-            self.last_check = datetime.now()
+        # Acquire lock for health check to prevent concurrent checks
+        async with self._lock:
+            # Double-check cache validity after acquiring lock
+            if self.is_cache_valid():
+                logger.debug("Using cached health status (after lock)")
+                return self.last_status
 
-            logger.info(f"Health check results: {health_status}")
-            return health_status
-        except Exception as e:
-            logger.error(f"Health check failed: {str(e)}")
-            # Return last known status or default to unhealthy
-            return self.last_status
+            # Perform fresh health check
+            logger.info("Performing health check on MCP servers")
+            try:
+                health_status = await asyncio.to_thread(agent_system.health_check)
+                self.last_status = health_status
+                self.last_check = datetime.now()
+
+                logger.info(f"Health check results: {health_status}")
+                return health_status
+            except Exception as e:
+                logger.error(f"Health check failed: {str(e)}")
+                # Return last known status or default to unhealthy
+                return self.last_status
 
     def invalidate_cache(self):
         """Force next health check to be fresh"""

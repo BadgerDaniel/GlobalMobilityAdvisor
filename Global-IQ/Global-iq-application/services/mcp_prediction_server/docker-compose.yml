@@ -1,7 +1,10 @@
 version: '3.8'
 
-# Standalone MCP Servers for Data Science Team
-# This compose file runs ONLY the MCP servers for independent testing
+# Standalone MCP Servers for TWO Modeling Teams
+# This compose file runs BOTH MCP servers for independent testing
+# - Compensation Modeling Team: Uses compensation-server (port 8081)
+# - Policy Modeling Team: Uses policy-server (port 8082)
+# Both teams can develop and test independently
 
 services:
   compensation-server:

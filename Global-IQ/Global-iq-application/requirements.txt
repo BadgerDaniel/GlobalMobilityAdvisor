@@ -11,3 +11,5 @@ SQLAlchemy
 aiosqlite
 asyncpg
 greenlet
+httpx
+requests

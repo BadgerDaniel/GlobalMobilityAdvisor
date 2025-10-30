@@ -9,6 +9,7 @@ from pydantic import BaseModel
 import logging
 from typing import Dict, Any
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 import json
@@ -262,10 +263,10 @@ IMPORTANT: Respond ONLY with valid JSON, no other text."""
 
         # Add metadata
         result["status"] = "success"
-        result["methodology"] = {
-            "model_type": "openai_gpt4o",
-            "data_sources": ["OpenAI GPT-4", "General knowledge"],
-            "version": "2.0.0"
+        result["metadata"] = {
+            "model_version": "2.0.0",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "methodology": "OpenAI GPT-4 placeholder (replace with your trained model)"
         }
 
         logger.info(f"Prediction successful via OpenAI")
@@ -377,6 +378,8 @@ if __name__ == "__main__":
     import uvicorn
     logger.info("Starting Compensation Prediction MCP Server on port 8081")
     uvicorn.run(app, host="0.0.0.0", port=8081)
+
+
 
 
 
