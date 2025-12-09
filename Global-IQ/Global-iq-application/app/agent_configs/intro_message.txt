@@ -1,4 +1,4 @@
-Welcome to Global IQ - Your AI-Powered Mobility Assistant! 🌍
+Welcome to Global IQ - Your HR Mobility Specialist! 🌍
 
 Behind the scenes, we have **two specialized AI engines** running:
 - **💰 Compensation Calculator** - Programmed with years of mobility data and cost analysis experience to calculate exact salary packages, allowances, and benefit structures
